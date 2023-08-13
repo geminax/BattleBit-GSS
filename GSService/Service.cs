@@ -70,20 +70,11 @@ namespace GSService
 
         private void Start()
         {
-            // install battlebit if cache not available
+            // start from scratch if cache not available
             if (MissingGSSCache())
             {
-                sendMessage("Missing GSS Cache. Nuking everything and reinstalling.", "Info");
-                if (!ReinstallGameServer())
-                {
-                    sendMessage("Failed to re/install game server", "Error");
-                    Stop();
-                }
-                if (!CreateGSSCache())
-                {
-                    sendMessage("Failed to create GSS cache", "Error");
-                    Stop();
-                }
+                sendMessage("Missing GSS Cache. Starting from scratch.", "Info");
+                StartFromScratch();
             }
 
             cachedChangeToken = CachedChangeToken();
@@ -108,8 +99,15 @@ namespace GSService
                 "-apiEndpoint=" + apiEndpoint
             };
 
+            bool MarkForReinstall = false;
             while (true)
             {
+                if (MarkForReinstall)
+                {
+                    StartFromScratch();
+                    MarkForReinstall = false;
+                }
+            
                 if (UpdateAvailable())
                 {
                     if (!UpdateGameServer())
@@ -120,7 +118,13 @@ namespace GSService
                 }
 
                 if (!GameServerRunning())
-                    StartGameServer(serverArgs);
+                {
+                    if (!StartGameServer(serverArgs))
+                    {
+                        sendMessage("Failed to start Game Server. Marking for Reinstall.", "Error");
+                        MarkForReinstall = true;
+                    }
+                }       
                 
                 Thread.Sleep(gsInterval);
             }
@@ -327,6 +331,20 @@ namespace GSService
             }
 
             return UpdateGameServer();
+        }
+
+        private void StartFromScratch()
+        {
+                if (!ReinstallGameServer())
+                {
+                    sendMessage("Failed to re/install game server", "Error");
+                    Stop();
+                }
+                if (!CreateGSSCache())
+                {
+                    sendMessage("Failed to create GSS cache", "Error");
+                    Stop();
+                }
         }
 
         private void sendMessage(string message, string level)
