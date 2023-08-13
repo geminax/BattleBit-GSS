@@ -49,14 +49,14 @@ namespace GSService
             apiEndpoint = Environment.GetEnvironmentVariable(ConfigurationManager.AppSettings["gss_api_endpoint"]);
             if (apiEndpoint == null)
             {
-                sendMessage("GSS_API_ENDPOINT env var not set", "Error");
+                sendMessage("GSS_API_ENDPOINT env var not set", "Fatal");
                 Stop();
             }
 
             steamUsername = Environment.GetEnvironmentVariable(ConfigurationManager.AppSettings["steam_username"]);
             if (steamUsername == null)
             {
-                sendMessage("STEAM_USERNAME env var not set", "Error");
+                sendMessage("STEAM_USERNAME env var not set", "Fatal");
                 Stop();
             }
 
@@ -80,7 +80,8 @@ namespace GSService
             cachedChangeToken = CachedChangeToken();
             if (cachedChangeToken == -1)
             {
-                sendMessage("Unable to retrieve cached change token", "Error");
+                sendMessage("Unable to retrieve cached change token", "Fatal");
+                Stop();
             }
 
             // kill server if running
@@ -112,7 +113,7 @@ namespace GSService
                 {
                     if (!UpdateGameServer())
                     {
-                        sendMessage("Failed to update Game Server.", "Error");
+                        sendMessage("Failed to update Game Server.", "Fatal");
                         Stop();
                     }
                 }
@@ -269,7 +270,8 @@ namespace GSService
             {
                 if (!File.Exists(cacheFilePath))
                 {
-                    File.WriteAllText(cacheFilePath, AvailableChangeToken().ToString());
+                    cachedChangeToken = AvailableChangeToken();
+                    File.WriteAllText(cacheFilePath, cachedChangeToken.ToString());
                 }
                 else
                 {
@@ -337,12 +339,12 @@ namespace GSService
         {
                 if (!ReinstallGameServer())
                 {
-                    sendMessage("Failed to re/install game server", "Error");
+                    sendMessage("Failed to re/install game server", "Fatal");
                     Stop();
                 }
                 if (!CreateGSSCache())
                 {
-                    sendMessage("Failed to create GSS cache", "Error");
+                    sendMessage("Failed to create GSS cache", "Fatal");
                     Stop();
                 }
         }
