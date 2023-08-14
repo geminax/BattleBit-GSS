@@ -21,7 +21,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        dotnet restore "BattleBit Server Service.sln"     
+        dotnet restore "BattleBit Server Service.sln"  
+    - name: And for nuget
+      run: |
+        nuget restore "BattleBit Server Service.sln"
     - name: Build
       run: |
         dotnet build "BattleBit Server Service.sln" --configuration Release --no-restore
