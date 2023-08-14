@@ -21,13 +21,13 @@ jobs:
 
     - name: Install dependencies
       run: |
-        dotnet restore "Battlebit Server Service.sln"     
+        dotnet restore "BattleBit Server Service.sln"     
     - name: Build
       run: |
-        dotnet build "Battlebit Server Service.sln" --configuration Release --no-restore
+        dotnet build "BattleBit Server Service.sln" --configuration Release --no-restore
     - name: Publish
       run: |
-        dotnet publish "Battlebit Server Service.sln" -c Release -o $HOME/publish
+        dotnet publish "BattleBit Server Service.sln" -c Release -o $HOME/publish
     - name: Upload
       uses: actions/upload-artifact@v3
       with:
