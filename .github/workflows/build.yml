@@ -1,0 +1,35 @@
+name: build
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+
+env:
+  DOTNET_VERSION: '6.0.401' 
+
+jobs:
+  ServiceAndTask:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        dotnet restore "Battlebit Server Service.sln"     
+    - name: Build
+      run: |
+        dotnet build "Battlebit Server Service.sln" --configuration Release --no-restore
+    - name: Publish
+      run: |
+        dotnet publish "Battlebit Server Service.sln" -c Release -o $HOME/publish
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: ServiceAndTask
+        path: /home/runner/publish/
