@@ -33,7 +33,7 @@ namespace GSServiceTask
 
         private static void sendMessage(string message, string level)
         {
-            string syslog = Environment.GetEnvironmentVariable("SYSLOG_SERVER_NAME");
+            string syslog = Environment.GetEnvironmentVariable("GSS_SYSLOG_SERVER_NAME");
             if (syslog == null)
                 return;
             string str = "";

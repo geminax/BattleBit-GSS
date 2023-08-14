@@ -306,8 +306,8 @@ namespace GSService
         private bool MissingGSSCache()
         {
             if (File.Exists(cacheFilePath))
-                return true;
-            return false;
+                return false;
+            return true;
         }
 
         private bool ReinstallGameServer()
