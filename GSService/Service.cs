@@ -401,7 +401,7 @@ namespace GSService
             string str = "";
             ASCIIEncoding aSCIIEncoding = new ASCIIEncoding();
             object[] objArray = new object[] { "gs_srv", level, message, Environment.MachineName.ToLower().Trim() };
-            str = string.Format("({0}) - ({3}): {1} {2}", objArray);
+            str = string.Format("{0} - ({3}): {1} {2}", objArray);
             byte[] bytes = aSCIIEncoding.GetBytes(str);
 
             eventLog.WriteEntry(str);
