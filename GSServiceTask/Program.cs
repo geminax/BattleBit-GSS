@@ -23,7 +23,7 @@ namespace GSServiceTask
                     {
                         serviceController.Start();
                         serviceController.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(10));
-                        Program.SendMessage("Paperspace service stopped. Windows task restarted the service", "Alert");
+                        Program.SendMessage("GSS stopped. Windows task restarted the service", "Alert");
                     }
                 }
             }
