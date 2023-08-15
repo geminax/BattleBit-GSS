@@ -41,7 +41,7 @@ namespace GSServiceTask
             string str = "";
             ASCIIEncoding aSCIIEncoding = new();
             object[] objArray = new object[] { "gs_srv", level, message, Environment.MachineName.ToLower().Trim() };
-            str = string.Format("{0} - ({3}): {1} {2}", objArray);
+            str = string.Format("{1} {0} ({3}) - {2}", objArray);
             byte[] bytes = aSCIIEncoding.GetBytes(str.Replace(">", "(gt)"));
             UdpClient udpClient = new(syslog, 514);
             udpClient.Send(bytes, (int)bytes.Length);
