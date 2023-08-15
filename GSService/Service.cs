@@ -87,6 +87,7 @@ namespace GSService
 
         protected override void OnStop()
         {
+            KillGameServer();
             SendMessage("-------- Stopping GSS --------", "Info");
         }
 
@@ -194,7 +195,7 @@ namespace GSService
 
         private bool GameServerRunning()
         {
-            Process[] processes = Process.GetProcessesByName(ConfigurationManager.AppSettings["battlebit_exe"]);
+            Process[] processes = Process.GetProcessesByName("BattleBit");
             if (processes.Length > 0)
                 return true;
             return false;
@@ -206,7 +207,7 @@ namespace GSService
             int killcount = 0;
             try
             {
-                Process[] processes = Process.GetProcessesByName(ConfigurationManager.AppSettings["battlebit_exe"]); 
+                Process[] processes = Process.GetProcessesByName("BattleBit"); 
                 foreach (Process p in processes)
                 {
                     p.Kill();
