@@ -2,6 +2,8 @@
 using System.ServiceProcess;
 using System.Text;
 
+[assembly: System.Runtime.Versioning.SupportedOSPlatform("windows")]
+
 namespace GSServiceTask
 {
     internal class Program
@@ -12,7 +14,7 @@ namespace GSServiceTask
             {
                 if (Environment.HasShutdownStarted)
                 {
-                    Program.sendMessage("Windows is shutting down. GS Service Task will not run...", "Debug");
+                    Program.SendMessage("Windows is shutting down. GS Service Task will not run...", "Debug");
                 }
                 else
                 {
@@ -21,27 +23,27 @@ namespace GSServiceTask
                     {
                         serviceController.Start();
                         serviceController.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(10));
-                        Program.sendMessage("Paperspace service stopped. Windows task restarted the service", "Alert");
+                        Program.SendMessage("Paperspace service stopped. Windows task restarted the service", "Alert");
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Program.sendMessage("Exception thrown while task attempted to restart GSService", "Error");
+                Program.SendMessage($"Exception thrown while task attempted to restart GSService: ${ex.Message}", "Error");
             }
         }
 
-        private static void sendMessage(string message, string level)
+        private static void SendMessage(string message, string level)
         {
-            string syslog = Environment.GetEnvironmentVariable("GSS_SYSLOG_SERVER_NAME");
+            string? syslog = Environment.GetEnvironmentVariable("GSS_SYSLOG_SERVER_NAME");
             if (syslog == null)
                 return;
             string str = "";
-            ASCIIEncoding aSCIIEncoding = new ASCIIEncoding();
+            ASCIIEncoding aSCIIEncoding = new();
             object[] objArray = new object[] { "gs_srv", level, message, Environment.MachineName.ToLower().Trim() };
             str = string.Format("({3}): {0} {1} {2}", objArray);
             byte[] bytes = aSCIIEncoding.GetBytes(str.Replace(">", "(gt)"));
-            UdpClient udpClient = new UdpClient(syslog, 514);
+            UdpClient udpClient = new(syslog, 514);
             udpClient.Send(bytes, (int)bytes.Length);
             udpClient.Close();
         }

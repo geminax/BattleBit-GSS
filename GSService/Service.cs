@@ -26,6 +26,7 @@ namespace GSService
         private string cacheFilePath;
         private string apiEndpoint;
         private string steamUsername;
+        private string serverPassword;
         public Service()
         {
             InitializeComponent();
@@ -44,28 +45,44 @@ namespace GSService
 
         protected override void OnStart(string[] args)
         {
-            sendMessage("-------- Starting GSS --------", "Info");
+            SendMessage("-------- Starting GSS --------", "Info");
 
-            apiEndpoint = Environment.GetEnvironmentVariable(ConfigurationManager.AppSettings["gss_api_endpoint"]);
+            RetrieveEnvVar("gss_api_endpoint", out apiEndpoint, true);
             if (apiEndpoint == null)
-            {
-                sendMessage("GSS_API_ENDPOINT env var not set", "Fatal");
-                Stop();
-            }
+                return;
 
-            steamUsername = Environment.GetEnvironmentVariable(ConfigurationManager.AppSettings["steam_username"]);
+            RetrieveEnvVar("steam_username", out steamUsername, true);
             if (steamUsername == null)
-            {
-                sendMessage("STEAM_USERNAME env var not set", "Fatal");
-                Stop();
-            }
+                return;
+
+            RetrieveEnvVar("gss_server_password", out serverPassword, true);
+            if (serverPassword == null)
+                return;
 
             Task.Run(() => Start());
         }
 
+        private void RetrieveEnvVar(string key, out string member, bool stopIfNull)
+        {
+            string envVarName = ConfigurationManager.AppSettings[key];
+            member = Environment.GetEnvironmentVariable(envVarName);
+            if (member == null)
+            {
+                if (stopIfNull)
+                {
+                    SendMessage($"{envVarName} is not set", "Fatal");
+                    Stop();
+                }
+                else
+                {
+                    SendMessage($"{envVarName} is not set", "Error");
+                } 
+            }
+        }
+
         protected override void OnStop()
         {
-            sendMessage("-------- Stopping GSS --------", "Info");
+            SendMessage("-------- Stopping GSS --------", "Info");
         }
 
         private void Start()
@@ -73,14 +90,14 @@ namespace GSService
             // start from scratch if cache not available
             if (MissingGSSCache())
             {
-                sendMessage("Missing GSS Cache. Starting from scratch.", "Info");
+                SendMessage("Missing GSS Cache. Starting from scratch.", "Info");
                 StartFromScratch();
             }
 
             cachedChangeToken = CachedChangeToken();
             if (cachedChangeToken == -1)
             {
-                sendMessage("Unable to retrieve cached change token", "Fatal");
+                SendMessage("Unable to retrieve cached change token", "Fatal");
                 Stop();
             }
 
@@ -91,6 +108,7 @@ namespace GSService
             string[] serverArgs = {
                 "-batchmode",
                 "-nographics",
+                "-Password=" + serverPassword,
                 "-LocalIp=0.0.0.0",
                 "-Port=29595",
                 "-Hz=144",
@@ -111,19 +129,29 @@ namespace GSService
             
                 if (UpdateAvailable())
                 {
+                    SendMessage("Update Available.", "Debug");
                     if (!UpdateGameServer())
                     {
-                        sendMessage("Failed to update Game Server.", "Fatal");
+                        SendMessage("Failed to update Game Server.", "Fatal");
                         Stop();
+                    } 
+                    else
+                    {
+                        SendMessage("Game Server updated", "Info");
                     }
                 }
 
                 if (!GameServerRunning())
                 {
+                    SendMessage("Game Server is not running", "Debug");
                     if (!StartGameServer(serverArgs))
                     {
-                        sendMessage("Failed to start Game Server. Marking for Reinstall.", "Error");
+                        SendMessage("Failed to start Game Server. Marking for Reinstall.", "Error");
                         MarkForReinstall = true;
+                    }
+                    else
+                    {
+                        SendMessage("Game Server started", "Info");
                     }
                 }       
                 
@@ -133,6 +161,7 @@ namespace GSService
 
         private bool StartGameServer(string[] args)
         {
+            SendMessage("Trying to start Game Server", "Debug");
             string argsStr = string.Join(" ", args);
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -152,7 +181,7 @@ namespace GSService
             }
             catch (Exception ex)
             {
-                sendMessage($"An error occurred: {ex.Message}", "Error");
+                SendMessage($"An error occurred: {ex.Message}", "Error");
                 return false;
             }
         }
@@ -167,22 +196,29 @@ namespace GSService
 
         private void KillGameServer()
         {
+            SendMessage("Trying to kill Game Server", "Debug");
+            int killcount = 0;
             try
             {
                 Process[] processes = Process.GetProcessesByName(ConfigurationManager.AppSettings["battlebit_exe"]); 
                 foreach (Process p in processes)
                 {
                     p.Kill();
+                    killcount++;
                 }
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException)
             {
                 // no game server running
             }
             catch (Exception ex)
             {
-                sendMessage($"Process could not be terminated: {ex.Message}", "Error");
+                SendMessage($"Process could not be terminated: {ex.Message}", "Error");
             }
+            if (killcount == 0)
+                SendMessage("Nothing was killed", "Debug");
+            else
+                SendMessage($"Killed Game Server {killcount} times", "Debug");
         }
 
         private int AvailableChangeToken()
@@ -201,7 +237,7 @@ namespace GSService
                 }
                 else
                 {
-                    sendMessage($"API request failed: {response.StatusCode}", "Error");
+                    SendMessage($"API request failed: {response.StatusCode}", "Error");
                 }
             }
             return -1;
@@ -212,7 +248,7 @@ namespace GSService
             int availableChangeToken = AvailableChangeToken();
             if (availableChangeToken == -1)
             {
-                sendMessage("Unable to retrieve available change token.", "Error");
+                SendMessage("Unable to retrieve available change token.", "Error");
             }
             else
             {
@@ -226,6 +262,7 @@ namespace GSService
 
         private bool UpdateGameServer()
         {
+            SendMessage("Updating Game Server", "Debug");
             if (GameServerRunning())
                 KillGameServer();
 
@@ -256,7 +293,7 @@ namespace GSService
             }
             catch (Exception ex)
             {
-                sendMessage($"An error occurred: {ex.Message}", "Error");
+                SendMessage($"An error occurred: {ex.Message}", "Error");
                 return false;
             }
 
@@ -266,6 +303,7 @@ namespace GSService
 
         private bool CreateGSSCache()
         {
+            SendMessage("Creating GSS Cache", "Debug");
             try
             {
                 if (!File.Exists(cacheFilePath))
@@ -281,7 +319,7 @@ namespace GSService
             }
             catch (Exception ex)
             {
-                sendMessage($"Failed to create GSS cache: {ex.Message}", "Error");
+                SendMessage($"Failed to create GSS cache: {ex.Message}", "Error");
                 return false;
             }
             return true;
@@ -298,7 +336,7 @@ namespace GSService
             }
             catch (Exception ex)
             {
-                sendMessage($"Failed to retrieve change token: {ex.Message}", "Error");
+                SendMessage($"Failed to retrieve change token: {ex.Message}", "Error");
             }
             return -1;
         }
@@ -312,6 +350,7 @@ namespace GSService
 
         private bool ReinstallGameServer()
         {
+            SendMessage("Reinstalling Game Server", "Debug");
             if (GameServerRunning())
                 KillGameServer();
 
@@ -328,7 +367,7 @@ namespace GSService
             }
             catch (Exception ex)
             {
-                sendMessage($"Failed to recreate battlebit directory: {ex.Message}", "Error");
+                SendMessage($"Failed to recreate battlebit directory: {ex.Message}", "Error");
                 return false;
             }
 
@@ -337,19 +376,20 @@ namespace GSService
 
         private void StartFromScratch()
         {
-                if (!ReinstallGameServer())
-                {
-                    sendMessage("Failed to re/install game server", "Fatal");
-                    Stop();
-                }
-                if (!CreateGSSCache())
-                {
-                    sendMessage("Failed to create GSS cache", "Fatal");
-                    Stop();
-                }
+            SendMessage("Starting from Scratch", "Debug");
+            if (!ReinstallGameServer())
+            {
+                SendMessage("Failed to re/install game server", "Fatal");
+                Stop();
+            }
+            if (!CreateGSSCache())
+            {
+                SendMessage("Failed to create GSS cache", "Fatal");
+                Stop();
+            }
         }
 
-        private void sendMessage(string message, string level)
+        private void SendMessage(string message, string level)
         {
             string str = "";
             ASCIIEncoding aSCIIEncoding = new ASCIIEncoding();
