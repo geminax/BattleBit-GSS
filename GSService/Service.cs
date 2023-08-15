@@ -26,6 +26,7 @@ namespace GSService
         private string cacheFilePath;
         private string apiEndpoint;
         private string steamUsername;
+        private string serverName;
         private string serverPassword;
         public Service()
         {
@@ -53,6 +54,10 @@ namespace GSService
 
             RetrieveEnvVar("steam_username", out steamUsername, true);
             if (steamUsername == null)
+                return;
+
+            RetrieveEnvVar("gss_server_name", out serverName, true);
+            if (serverName == null)
                 return;
 
             RetrieveEnvVar("gss_server_password", out serverPassword, true);
@@ -108,6 +113,7 @@ namespace GSService
             string[] serverArgs = {
                 "-batchmode",
                 "-nographics",
+                "-Name=" + serverName,
                 "-Password=" + serverPassword,
                 "-LocalIp=0.0.0.0",
                 "-Port=29595",
@@ -394,7 +400,7 @@ namespace GSService
             string str = "";
             ASCIIEncoding aSCIIEncoding = new ASCIIEncoding();
             object[] objArray = new object[] { "gs_srv", level, message, Environment.MachineName.ToLower().Trim() };
-            str = string.Format("({3}): {0} {1} {2}", objArray);
+            str = string.Format("({0}) - ({3}): {1} {2}", objArray);
             byte[] bytes = aSCIIEncoding.GetBytes(str);
 
             eventLog.WriteEntry(str);
