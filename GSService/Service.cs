@@ -169,7 +169,6 @@ namespace GSService
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                CreateNoWindow = true
             };
 
             SendMessage($"Trying to start Game Server {startInfo.FileName} in {startInfo.WorkingDirectory} with args {argsStr}", "Debug");
