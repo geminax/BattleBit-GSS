@@ -415,16 +415,26 @@ namespace GSService
         private void ReadServerArgsConfig(out List<string> serverargs)
         {
             SendMessage("Reading ServerArgs", "Info");
-            var jStr = File.ReadAllText("ServerArgs.json");
-            SendMessage($"jStr: {jStr}", "Debug");
-            var jObj = JObject.Parse(jStr);
-            SendMessage($"jObj: {jObj}", "Debug");
             serverargs = new List<string>();
-            foreach (var property in jObj)
+            try
             {
-                var option = $"-{property.Key}={property.Value}";
-                SendMessage($"Adding option: {option}", "Debug");
-                serverargs.Add($"-{property.Key}={property.Value}");
+                var jStr = File.ReadAllText("ServerArgs.json");
+
+                SendMessage($"jStr: {jStr}", "Debug");
+                JObject jObj = JObject.Parse(jStr);
+                SendMessage($"jObj: {jObj}", "Debug");
+
+                foreach (var property in jObj)
+                {
+                    var option = $"-{property.Key}={property.Value}";
+                    SendMessage($"Adding option: {option}", "Debug");
+                    serverargs.Add($"-{property.Key}={property.Value}");
+                }
+            }
+            catch (Exception ex)
+            {
+                SendMessage($"Exception occurred while reading server args config: {ex.Message}", "Error");
+                Stop();
             }
         }
     }
