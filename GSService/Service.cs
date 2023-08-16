@@ -160,7 +160,7 @@ namespace GSService
 
         private bool StartGameServer(List<string> args)
         {
-            SendMessage("Trying to start Game Server", "Debug");
+            SendMessage($"Trying to start Game Server with args {args}", "Debug");
             string argsStr = string.Join(" ", args);
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -414,11 +414,16 @@ namespace GSService
 
         private void ReadServerArgsConfig(out List<string> serverargs)
         {
-            var jObj = JObject.Parse(File.ReadAllText("ServerArgs.json"));
-
+            SendMessage("Reading ServerArgs", "Info");
+            var jStr = File.ReadAllText("ServerArgs.json");
+            SendMessage($"jStr: {jStr}", "Debug");
+            var jObj = JObject.Parse(jStr);
+            SendMessage($"jObj: {jObj}", "Debug");
             serverargs = new List<string>();
             foreach (var property in jObj)
             {
+                var option = $"-{property.Key}={property.Value}";
+                SendMessage($"Adding option: {option}", "Debug");
                 serverargs.Add($"-{property.Key}={property.Value}");
             }
         }
