@@ -2,8 +2,5 @@
   "AntiCheat": "eac",
   "LocalIp": "0.0.0.0",
   "Port": 29595,
-  "Hz": 144,
-  "FirstMap": "Construction",
-  "FirstGamemode": "DOMI",
-  "FixedSize": "medium"
+  "Hz": 144
 }
