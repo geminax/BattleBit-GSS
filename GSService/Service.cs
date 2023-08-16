@@ -114,7 +114,7 @@ namespace GSService
             string[] serverArgs = {
                 "-batchmode",
                 "-nographics",
-                //"-AntiCheat=none",
+                "-AntiCheat=eac",
                 "-Name=" + serverName,
                 "-Password=" + serverPassword,
                 "-LocalIp=0.0.0.0",
@@ -175,13 +175,19 @@ namespace GSService
             {
                 FileName = ConfigurationManager.AppSettings["battlebit_exe"],
                 Arguments = argsStr, 
-                WorkingDirectory = @"C:\battlebit" // Optional working directory
+                WorkingDirectory = @"C:\battlebit", // Optional working directory
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
             };
 
             Process process = new Process
             {
-                StartInfo = startInfo
+                StartInfo = startInfo,
             };
+            process.OutputDataReceived += (sender, e) => { SendMessage(e.Data, "GS_OUT"); };
+            process.ErrorDataReceived += (sender, e) => { SendMessage(e.Data, "GS_ERROR"); };
 
             try
             {
