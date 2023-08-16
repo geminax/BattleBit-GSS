@@ -182,13 +182,19 @@ namespace GSService
 
             try
             {
-                return process.Start();  
+                if (process.Start())
+                {
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                    return true;
+                } 
             }
             catch (Exception ex)
             {
                 SendMessage($"An error occurred: {ex.Message}", "Error");
                 return false;
             }
+            return false;
         }
 
         private bool GameServerRunning()
