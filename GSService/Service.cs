@@ -415,6 +415,12 @@ namespace GSService
         private void ReadServerArgsConfig(out List<string> serverargs)
         {
             SendMessage("Reading ServerArgs", "Info");
+
+            string executablePath = Process.GetCurrentProcess().MainModule.FileName;
+            SendMessage("Executable Path: " + executablePath, "Info");
+
+            string executableDirectory = System.IO.Path.GetDirectoryName(executablePath);
+            SendMessage("Executable Directory: " + executableDirectory, "Info");
             serverargs = new List<string>();
             try
             {
