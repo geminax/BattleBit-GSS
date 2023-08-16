@@ -114,6 +114,7 @@ namespace GSService
             string[] serverArgs = {
                 "-batchmode",
                 "-nographics",
+                "-AntiCheat=none",
                 "-Name=" + serverName,
                 "-Password=" + serverPassword,
                 "-LocalIp=0.0.0.0",
