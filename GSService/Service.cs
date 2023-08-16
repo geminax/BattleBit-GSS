@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using System.Configuration;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 
 namespace GSService
 {
