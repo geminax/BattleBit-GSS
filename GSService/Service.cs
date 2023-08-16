@@ -111,20 +111,22 @@ namespace GSService
             if (GameServerRunning())
                 KillGameServer();
 
-            string[] serverArgs = {
-                "-batchmode",
-                "-nographics",
-                "-AntiCheat=eac",
-                "-Name=" + serverName,
-                "-Password=" + serverPassword,
-                "-LocalIp=0.0.0.0",
-                "-Port=29595",
-                "-Hz=144",
-                "-FirstMap=Construction",
-                "-FirstGamemode=DOMI",
-                "-FixedSize=medium",
-                "-apiEndpoint=" + apiEndpoint
-            };
+            //string[] serverArgs = {
+            //    "-batchmode",
+            //    "-nographics",
+            //    "-AntiCheat=eac",
+            //    "-Name=" + serverName,
+            //    "-Password=" + serverPassword,
+            //    "-LocalIp=0.0.0.0",
+            //    "-Port=29595",
+            //    "-Hz=144",
+            //    "-FirstMap=Construction",
+            //    "-FirstGamemode=DOMI",
+            //    "-FixedSize=medium",
+            //    "-apiEndpoint=" + apiEndpoint
+            //};
+
+            ReadServerArgsConfig(out var serverArgs);
 
             bool MarkForReinstall = false;
             while (true)
@@ -419,6 +421,11 @@ namespace GSService
             UdpClient udpClient = new UdpClient(syslog, 514);
             udpClient.Send(bytes, (int)bytes.Length);
             udpClient.Close();
+        }
+
+        private void ReadServerArgsConfig(out string[] serverargs)
+        {
+            serverargs = new string[5];
         }
     }
 }
