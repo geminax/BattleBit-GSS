@@ -417,14 +417,11 @@ namespace GSService
             SendMessage("Reading ServerArgs", "Info");
 
             string executablePath = Process.GetCurrentProcess().MainModule.FileName;
-            SendMessage("Executable Path: " + executablePath, "Info");
-
             string executableDirectory = System.IO.Path.GetDirectoryName(executablePath);
-            SendMessage("Executable Directory: " + executableDirectory, "Info");
             serverargs = new List<string>();
             try
             {
-                var jStr = File.ReadAllText("ServerArgs.json");
+                var jStr = File.ReadAllText($"{executableDirectory}\\ServerArgs.json");
 
                 SendMessage($"jStr: {jStr}", "Debug");
                 JObject jObj = JObject.Parse(jStr);
