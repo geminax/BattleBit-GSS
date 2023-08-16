@@ -26,10 +26,10 @@ namespace GSService
         public Service()
         {
             InitializeComponent();
-            eventLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists("GSS"))
+            eventLog = new EventLog();
+            if (!EventLog.SourceExists("GSS"))
             {
-                System.Diagnostics.EventLog.CreateEventSource(
+                EventLog.CreateEventSource(
                     "GSS", "GSSLog");
             }
             eventLog.Source = "GSS";
