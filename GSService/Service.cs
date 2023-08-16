@@ -161,13 +161,13 @@ namespace GSService
         private bool StartGameServer(List<string> args)
         {
             string argsStr = string.Join(" ", args);
-            SendMessage($"Trying to start Game Server with args {args}", "Debug");
+            SendMessage($"Trying to start Game Server with args {argsStr}", "Debug");
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ConfigurationManager.AppSettings["battlebit_exe"],
                 Arguments = argsStr, 
                 WorkingDirectory = @"C:\battlebit", // Optional working directory
-                UseShellExecute = true,
+                UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true
@@ -422,10 +422,7 @@ namespace GSService
             try
             {
                 var jStr = File.ReadAllText($"{executableDirectory}\\ServerArgs.json");
-
-                SendMessage($"jStr: {jStr}", "Debug");
                 JObject jObj = JObject.Parse(jStr);
-                SendMessage($"jObj: {jObj}", "Debug");
 
                 foreach (var property in jObj)
                 {
