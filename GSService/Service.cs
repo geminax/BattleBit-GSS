@@ -163,9 +163,8 @@ namespace GSService
             string argsStr = string.Join(" ", args);
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
-                FileName = ConfigurationManager.AppSettings["battlebit_exe"],
+                FileName = @"C:\battlebit\" + ConfigurationManager.AppSettings["battlebit_exe"],
                 Arguments = argsStr, 
-                WorkingDirectory = @"C:\battlebit", // Optional working directory
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
