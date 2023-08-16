@@ -160,14 +160,14 @@ namespace GSService
 
         private bool StartGameServer(List<string> args)
         {
-            SendMessage($"Trying to start Game Server with args {args}", "Debug");
             string argsStr = string.Join(" ", args);
+            SendMessage($"Trying to start Game Server with args {args}", "Debug");
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ConfigurationManager.AppSettings["battlebit_exe"],
                 Arguments = argsStr, 
                 WorkingDirectory = @"C:\battlebit", // Optional working directory
-                UseShellExecute = false,
+                UseShellExecute = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true
