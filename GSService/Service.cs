@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.IO;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Sockets;
-using System.Runtime.Hosting;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Configuration;
 using System.Net.Http;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace GSService
 {
@@ -111,22 +107,16 @@ namespace GSService
             if (GameServerRunning())
                 KillGameServer();
 
-            //string[] serverArgs = {
-            //    "-batchmode",
-            //    "-nographics",
-            //    "-AntiCheat=eac",
-            //    "-Name=" + serverName,
-            //    "-Password=" + serverPassword,
-            //    "-LocalIp=0.0.0.0",
-            //    "-Port=29595",
-            //    "-Hz=144",
-            //    "-FirstMap=Construction",
-            //    "-FirstGamemode=DOMI",
-            //    "-FixedSize=medium",
-            //    "-apiEndpoint=" + apiEndpoint
-            //};
-
             ReadServerArgsConfig(out var serverArgs);
+
+            serverArgs.AddRange(new string[]
+            {
+                "-batchmode",
+                "-nographics",
+                "-Name=" + serverName,
+                "-Password=" + serverPassword,
+                "-apiEndpoint=" + apiEndpoint
+            });
 
             bool MarkForReinstall = false;
             while (true)
@@ -169,7 +159,7 @@ namespace GSService
             }
         }
 
-        private bool StartGameServer(string[] args)
+        private bool StartGameServer(List<string> args)
         {
             SendMessage("Trying to start Game Server", "Debug");
             string argsStr = string.Join(" ", args);
@@ -423,9 +413,15 @@ namespace GSService
             udpClient.Close();
         }
 
-        private void ReadServerArgsConfig(out string[] serverargs)
+        private void ReadServerArgsConfig(out List<string> serverargs)
         {
-            serverargs = new string[5];
+            var jObj = JObject.Parse(File.ReadAllText("ServerArgs.json"));
+
+            serverargs = new List<string>();
+            foreach (var property in jObj)
+            {
+                serverargs.Add($"-{property.Key}={property.Value}");
+            }
         }
     }
 }
