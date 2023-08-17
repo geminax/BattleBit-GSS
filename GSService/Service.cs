@@ -17,7 +17,7 @@ namespace GSService
     {
         private EventLog eventLog;
         private int gsInterval;
-        private int cachedChangeToken;
+        private int cachedBuildTimestamp;
         private string cacheFilePath;
         private string apiEndpoint;
         private string steamUsername;
@@ -96,8 +96,8 @@ namespace GSService
                 StartFromScratch();
             }
 
-            cachedChangeToken = CachedBuildTimestamp();
-            if (cachedChangeToken == -1)
+            cachedBuildTimestamp = CachedBuildTimestamp();
+            if (cachedBuildTimestamp == -1)
             {
                 SendMessage("Unable to retrieve cached change token", "Fatal");
                 Stop();
@@ -257,14 +257,14 @@ namespace GSService
 
         private bool UpdateAvailable()
         {
-            int availableChangeToken = AvailableBuildTimestamp();
-            if (availableChangeToken == -1)
+            int availableBuildTimestamp = AvailableBuildTimestamp();
+            if (availableBuildTimestamp == -1)
             {
-                SendMessage("Unable to retrieve available change token.", "Error");
+                SendMessage("Unable to retrieve available build timestamp.", "Error");
             }
             else
             {
-                if (availableChangeToken != cachedChangeToken)
+                if (availableBuildTimestamp > cachedBuildTimestamp)
                 {
                     return true;
                 }
@@ -327,8 +327,8 @@ namespace GSService
             {
                 if (!File.Exists(cacheFilePath))
                 {
-                    cachedChangeToken = AvailableBuildTimestamp();
-                    File.WriteAllText(cacheFilePath, cachedChangeToken.ToString());
+                    cachedBuildTimestamp = AvailableBuildTimestamp();
+                    File.WriteAllText(cacheFilePath, cachedBuildTimestamp.ToString());
                 }
                 else
                 {
