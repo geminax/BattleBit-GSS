@@ -3,7 +3,5 @@
   "LocalIp": "0.0.0.0",
   "Port": 29595,
   "Hz": 144,
-  "FixedSize": "none",
-  "FirstSize": "medium",
-  "MaxSize": "ultra"
+  "FixedSize": "ultra"
 }
