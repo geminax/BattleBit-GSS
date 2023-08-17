@@ -20,6 +20,7 @@ namespace GSService
         private int cachedBuildTimestamp;
         private string cacheFilePath;
         private string apiEndpoint;
+        private string apiToken;
         private string steamUsername;
         private string serverName;
         private string serverPassword;
@@ -46,6 +47,10 @@ namespace GSService
 
             RetrieveEnvVar("gss_api_endpoint", out apiEndpoint, true);
             if (apiEndpoint == null)
+                return;
+
+            RetrieveEnvVar("gss_api_token", out apiToken, true);
+            if (apiToken == null)
                 return;
 
             RetrieveEnvVar("steam_username", out steamUsername, true);
@@ -113,9 +118,10 @@ namespace GSService
             {
                 "-batchmode",
                 "-nographics",
-                "-Name=" + serverName,
-                "-Password=" + serverPassword,
-                "-apiEndpoint=" + apiEndpoint
+                $"-Name={serverName}",
+                $"-Password={serverPassword}",
+                $"-apiEndpoint={apiEndpoint}",
+                $"-apiToken={apiToken}"
             });
 
             bool MarkForReinstall = false;
