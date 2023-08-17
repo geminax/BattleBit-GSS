@@ -257,6 +257,7 @@ namespace GSService
 
         private bool UpdateAvailable()
         {
+            SendMessage("Checking for update", "Info");
             int availableBuildTimestamp = AvailableBuildTimestamp();
             if (availableBuildTimestamp == -1)
             {
@@ -264,6 +265,7 @@ namespace GSService
             }
             else
             {
+                SendMessage($"Available Timestamp: {availableBuildTimestamp} Cached Timestamp: {cachedBuildTimestamp}", "Info");
                 if (availableBuildTimestamp > cachedBuildTimestamp)
                 {
                     return true;
