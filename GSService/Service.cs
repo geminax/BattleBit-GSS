@@ -245,7 +245,12 @@ namespace GSService
                 {
                     string jsonResponse = response.Content.ReadAsStringAsync().Result;
                     JObject jsonObj = JObject.Parse(jsonResponse);
-                    return jsonObj["data"][app_id]["depots"]["branches"][branch]["timeupdated"].Value<int>();
+                    JToken token = jsonObj["data"][app_id]["depots"]["branches"];
+                    if (!string.IsNullOrEmpty(branch))
+                    {
+                        token = token[branch];
+                    }
+                    return token["timeupdated"].Value<int>();
                 }
                 else
                 {
