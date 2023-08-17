@@ -333,7 +333,6 @@ namespace GSService
                 if (!File.Exists(cacheFilePath))
                 {
                     cachedBuildTimestamp = AvailableBuildTimestamp();
-                    SendMessage($"timestamp {cachedBuildTimestamp}", "Debug");
                     File.WriteAllText(cacheFilePath, cachedBuildTimestamp.ToString());
                 }
                 else
