@@ -23,7 +23,7 @@ namespace GSService
         private string steamUsername;
         private string serverName;
         private string serverPassword;
-        private string branch;
+        private string branch = "community-testing"; // TODO move this somewhere else, also login is in place to handle null values, it's not complete.
         public Service()
         {
             InitializeComponent();
