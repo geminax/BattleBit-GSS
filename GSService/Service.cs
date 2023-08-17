@@ -282,6 +282,7 @@ namespace GSService
                 $"+force_install_dir {ConfigurationManager.AppSettings["battlebit_dir"]}",
                 $"+login {steamUsername}",
                 $"+app_update {ConfigurationManager.AppSettings["battlebit_app_id"]}",
+                "-beta community-testing",
                 "+exit"
             };
             ProcessStartInfo startInfo = new ProcessStartInfo
