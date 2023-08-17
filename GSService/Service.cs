@@ -23,6 +23,7 @@ namespace GSService
         private string steamUsername;
         private string serverName;
         private string serverPassword;
+        private string branch = "community-testing";
         public Service()
         {
             InitializeComponent();
@@ -95,7 +96,7 @@ namespace GSService
                 StartFromScratch();
             }
 
-            cachedChangeToken = CachedChangeToken();
+            cachedChangeToken = CachedBuildTimestamp();
             if (cachedChangeToken == -1)
             {
                 SendMessage("Unable to retrieve cached change token", "Fatal");
@@ -232,7 +233,7 @@ namespace GSService
                 SendMessage($"Killed Game Server {killcount} times", "Debug");
         }
 
-        private int AvailableChangeToken()
+        private int AvailableBuildTimestamp()
         {
             string app_id = ConfigurationManager.AppSettings["battlebit_app_id"];
             using (HttpClient httpClient = new HttpClient())
@@ -244,7 +245,7 @@ namespace GSService
                 {
                     string jsonResponse = response.Content.ReadAsStringAsync().Result;
                     JObject jsonObj = JObject.Parse(jsonResponse);
-                    return jsonObj["data"][app_id]["_change_number"].Value<int>();
+                    return jsonObj["data"][app_id]["depots"]["branches"][branch]["timeupdated"].Value<int>();
                 }
                 else
                 {
@@ -256,7 +257,7 @@ namespace GSService
 
         private bool UpdateAvailable()
         {
-            int availableChangeToken = AvailableChangeToken();
+            int availableChangeToken = AvailableBuildTimestamp();
             if (availableChangeToken == -1)
             {
                 SendMessage("Unable to retrieve available change token.", "Error");
@@ -277,13 +278,20 @@ namespace GSService
             if (GameServerRunning())
                 KillGameServer();
 
-            string[] steamcmd_args =
+            List<string> steamcmd_args = new List<string>
             {
                 $"+force_install_dir {ConfigurationManager.AppSettings["battlebit_dir"]}",
                 $"+login {steamUsername}",
                 $"+app_update {ConfigurationManager.AppSettings["battlebit_app_id"]}",
-                "+exit"
             };
+
+            if (!string.IsNullOrEmpty(branch))
+            {
+                steamcmd_args.Add($"-beta {branch}");
+            }
+
+            steamcmd_args.Add("+exit");
+
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ConfigurationManager.AppSettings["steamcmd_file_path"],
@@ -319,7 +327,7 @@ namespace GSService
             {
                 if (!File.Exists(cacheFilePath))
                 {
-                    cachedChangeToken = AvailableChangeToken();
+                    cachedChangeToken = AvailableBuildTimestamp();
                     File.WriteAllText(cacheFilePath, cachedChangeToken.ToString());
                 }
                 else
@@ -336,7 +344,7 @@ namespace GSService
             return true;
         }
 
-        private int CachedChangeToken()
+        private int CachedBuildTimestamp()
         {
             try
             {
