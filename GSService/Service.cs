@@ -24,7 +24,6 @@ namespace GSService
         private string steamUsername;
         private string serverName;
         private string serverPassword;
-        private string branch = "community-testing"; // TODO move this somewhere else, also login is in place to handle null values, it's not complete.
         public Service()
         {
             InitializeComponent();
@@ -119,7 +118,7 @@ namespace GSService
                 "-batchmode",
                 "-nographics",
                 $"-Name={serverName}",
-                $"-Password={serverPassword}",
+                //$"-Password={serverPassword}",
                 $"-apiEndpoint={apiEndpoint}",
                 $"-apiToken={apiToken}"
             });
@@ -251,11 +250,7 @@ namespace GSService
                 {
                     string jsonResponse = response.Content.ReadAsStringAsync().Result;
                     JObject jsonObj = JObject.Parse(jsonResponse);
-                    JToken token = jsonObj["data"][app_id]["depots"]["branches"];
-                    if (!string.IsNullOrEmpty(branch))
-                    {
-                        token = token[branch];
-                    }
+                    JToken token = jsonObj["data"][app_id]["depots"]["branches"]["community-testing"];
                     return token["timeupdated"].Value<int>();
                 }
                 else
