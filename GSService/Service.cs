@@ -291,10 +291,7 @@ namespace GSService
                 $"+app_update {ConfigurationManager.AppSettings["battlebit_app_id"]}",
             };
 
-            if (!string.IsNullOrEmpty(branch))
-            {
-                steamcmd_args.Add($"-beta {branch}");
-            }
+            steamcmd_args.Add($"-beta community-testing");
 
             steamcmd_args.Add("+exit");
 
