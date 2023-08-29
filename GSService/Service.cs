@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Configuration;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
 
 namespace GSService
 {
@@ -17,13 +18,17 @@ namespace GSService
     {
         private EventLog eventLog;
         private int gsInterval;
-        private int cachedBuildTimestamp;
-        private string cacheFilePath;
+        private string installedHash;
+        private string battlebit_dir;
+        private string battlebit_temp_dir;
+
         private string apiEndpoint;
         private string apiToken;
         private string steamUsername;
         private string serverName;
         private string serverPassword;
+
+
         public Service()
         {
             InitializeComponent();
@@ -37,7 +42,8 @@ namespace GSService
             eventLog.Log = "GSSLog";
 
             gsInterval = int.Parse(ConfigurationManager.AppSettings["gss_interval"]);
-            cacheFilePath = ConfigurationManager.AppSettings["battlebit_dir"] + ConfigurationManager.AppSettings["gss_cache_file"];
+            battlebit_dir = ConfigurationManager.AppSettings["battlebit_dir"];
+            battlebit_temp_dir = ConfigurationManager.AppSettings["battlebit_temp_dir"];
         }
 
         protected override void OnStart(string[] args)
@@ -93,19 +99,16 @@ namespace GSService
 
         private void Start()
         {
-            // start from scratch if cache not available
-            if (MissingGSSCache())
-            {
-                SendMessage("Missing GSS Cache. Starting from scratch.", "Info");
-                StartFromScratch();
-            }
+            bool MarkForReinstall = false;
 
-            cachedBuildTimestamp = CachedBuildTimestamp();
-            if (cachedBuildTimestamp == -1)
+            if (!UpdateGameServer(ConfigurationManager.AppSettings["battlebit_dir"], true))
             {
-                SendMessage("Unable to retrieve cached change token", "Fatal");
+                SendMessage("Failed to update Game Server", "Fatal");
                 Stop();
             }
+
+            installedHash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_dir"], new SHA256Managed());
+            SendMessage($"Installed Hash: {installedHash}", "Debug");
 
             // kill server if running
             if (GameServerRunning())
@@ -123,7 +126,6 @@ namespace GSService
                 $"-apiToken={apiToken}"
             });
 
-            bool MarkForReinstall = false;
             while (true)
             {
                 if (MarkForReinstall)
@@ -134,10 +136,10 @@ namespace GSService
             
                 if (UpdateAvailable())
                 {
-                    SendMessage("Update Available.", "Debug");
-                    if (!UpdateGameServer())
+                    SendMessage("Update Available", "Debug");
+                    if (!UpdateGameServer(ConfigurationManager.AppSettings["battlebit_dir"], true))
                     {
-                        SendMessage("Failed to update Game Server.", "Fatal");
+                        SendMessage("Failed to update Game Server", "Fatal");
                         Stop();
                     } 
                     else
@@ -151,16 +153,19 @@ namespace GSService
                     SendMessage("Game Server is not running", "Debug");
                     if (!StartGameServer(serverArgs))
                     {
-                        SendMessage("Failed to start Game Server. Marking for Reinstall.", "Error");
+                        SendMessage("Failed to start Game Server; Marking for Reinstall", "Error");
                         MarkForReinstall = true;
                     }
                     else
                     {
                         SendMessage("Game Server started", "Info");
                     }
-                }       
-                
-                Thread.Sleep(gsInterval);
+                }
+
+                if (MarkForReinstall)
+                    Thread.Sleep(20000);
+                else
+                    Thread.Sleep(gsInterval);
             }
         }
 
@@ -237,60 +242,79 @@ namespace GSService
             else
                 SendMessage($"Killed Game Server {killcount} times", "Debug");
         }
-
-        private int AvailableBuildTimestamp()
+        private bool IsBinaryFile(string filePath)
         {
-            string app_id = ConfigurationManager.AppSettings["battlebit_app_id"];
-            using (HttpClient httpClient = new HttpClient())
-            {
-                string apiUrl = ConfigurationManager.AppSettings["steamcmd_app_api"] + app_id;
-                HttpResponseMessage response = httpClient.GetAsync(apiUrl).Result;
+            string extension = Path.GetExtension(filePath).ToLower();
+            return extension == ".exe" || extension == ".dll";
+        }
 
-                if (response.IsSuccessStatusCode)
+        private string CalculateBinaryFilesHash(string directoryPath, HashAlgorithm algorithm)
+        {
+            StringBuilder hashBuilder = new StringBuilder();
+
+            foreach (string filePath in Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories))
+            {
+                if (IsBinaryFile(filePath))
                 {
-                    string jsonResponse = response.Content.ReadAsStringAsync().Result;
-                    JObject jsonObj = JObject.Parse(jsonResponse);
-                    JToken token = jsonObj["data"][app_id]["depots"]["branches"]["community-testing"];
-                    return token["timeupdated"].Value<int>();
-                }
-                else
-                {
-                    SendMessage($"API request failed: {response.StatusCode}", "Error");
+                    using (FileStream fileStream = File.OpenRead(filePath))
+                    {
+                        byte[] hashBytes = algorithm.ComputeHash(fileStream);
+                        string hashString = BitConverter.ToString(hashBytes).Replace("-", "");
+                        hashBuilder.Append(hashString);
+                    }
                 }
             }
-            return -1;
+
+            return hashBuilder.ToString();
         }
 
         private bool UpdateAvailable()
         {
-            int availableBuildTimestamp = AvailableBuildTimestamp();
-            if (availableBuildTimestamp == -1)
+            try
             {
-                SendMessage("Unable to retrieve available build timestamp.", "Error");
-            }
-            else
-            {
-                if (availableBuildTimestamp > cachedBuildTimestamp)
+                if (Directory.Exists(ConfigurationManager.AppSettings["battlebit_temp_dir"]))
                 {
-                    return true;
+                    Directory.Delete(ConfigurationManager.AppSettings["battlebit_temp_dir"], true);
                 }
+
+                Directory.CreateDirectory(ConfigurationManager.AppSettings["battlebit_temp_dir"]);
+
             }
+            catch (Exception ex)
+            {
+                SendMessage($"Failed to recreate battlebit directory: {ex.Message}", "Error");
+                return false;
+            }
+
+            if (!UpdateGameServer(ConfigurationManager.AppSettings["battlebit_temp_dir"], false))
+                return false;
+
+            var hash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_temp_dir"], new SHA256Managed());
+
+            SendMessage($"Comparing Hashes, installed: {installedHash} , available: {hash}", "Debug");
+
+            if (installedHash != hash)
+                return true;
             return false;
         }
 
-        private bool UpdateGameServer()
+        private bool UpdateGameServer(string install_dir, bool killrunning)
         {
-            SendMessage("Updating Game Server", "Debug");
-            if (GameServerRunning())
-                KillGameServer();
+            SendMessage($"Updating Game Server at location {install_dir}", "Debug");
+            if (killrunning)
+            {
+                if (GameServerRunning())
+                    KillGameServer();
+            }
 
             List<string> steamcmd_args = new List<string>
             {
-                $"+force_install_dir {ConfigurationManager.AppSettings["battlebit_dir"]}",
+                $"+force_install_dir {install_dir}",
                 $"+login {steamUsername}",
                 $"+app_update {ConfigurationManager.AppSettings["battlebit_app_id"]}",
             };
 
+            // Remove when moved to production
             steamcmd_args.Add($"-beta community-testing");
 
             steamcmd_args.Add("+exit");
@@ -309,7 +333,10 @@ namespace GSService
             try
             {
                 if (!process.Start())
+                {
+                    SendMessage("No new steamcmd process could be started for updating", "Error");
                     return false;
+                }
 
                 process.WaitForExit();
             }
@@ -321,53 +348,6 @@ namespace GSService
 
             return true;
 
-        }
-
-        private bool CreateGSSCache()
-        {
-            SendMessage("Creating GSS Cache", "Debug");
-            try
-            {
-                if (!File.Exists(cacheFilePath))
-                {
-                    cachedBuildTimestamp = AvailableBuildTimestamp();
-                    File.WriteAllText(cacheFilePath, cachedBuildTimestamp.ToString());
-                }
-                else
-                {
-                    // not really an error for the file to exist, but we treat it as one
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                SendMessage($"Failed to create GSS cache: {ex.Message}", "Error");
-                return false;
-            }
-            return true;
-        }
-
-        private int CachedBuildTimestamp()
-        {
-            try
-            {
-                if (File.Exists(cacheFilePath))
-                {
-                    return int.Parse(File.ReadAllText(cacheFilePath));
-                }
-            }
-            catch (Exception ex)
-            {
-                SendMessage($"Failed to retrieve change token: {ex.Message}", "Error");
-            }
-            return -1;
-        }
-
-        private bool MissingGSSCache()
-        {
-            if (File.Exists(cacheFilePath))
-                return false;
-            return true;
         }
 
         private bool ReinstallGameServer()
@@ -393,7 +373,7 @@ namespace GSService
                 return false;
             }
 
-            return UpdateGameServer();
+            return UpdateGameServer(bbDirStr, true);
         }
 
         private void StartFromScratch()
@@ -404,11 +384,8 @@ namespace GSService
                 SendMessage("Failed to re/install game server", "Fatal");
                 Stop();
             }
-            if (!CreateGSSCache())
-            {
-                SendMessage("Failed to create GSS cache", "Fatal");
-                Stop();
-            }
+            installedHash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_dir"], new SHA256Managed());
+            SendMessage($"Installed Hash: {installedHash}", "Debug");
         }
 
         private void SendMessage(string message, string level)
