@@ -291,11 +291,15 @@ namespace GSService
 
             var hash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_temp_dir"], new SHA256Managed());
 
-            SendMessage($"Comparing Hashes, installed: {installedHash} , available: {hash}", "Debug");
-
             if (installedHash != hash)
+            {
+                SendMessage($"Hashes are different", "Info");
                 return true;
-            return false;
+            } else
+            {
+                SendMessage($"Hashes are the same", "Info");
+                return false;
+            }
         }
 
         private bool UpdateGameServer(string install_dir, bool killrunning)
