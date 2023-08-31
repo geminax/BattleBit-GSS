@@ -18,14 +18,11 @@ namespace GSService
     {
         private EventLog eventLog;
         private int gss_interval;
-        private string installedHash;
+        private string installedHash = String.Empty;
         private string battlebit_dir;
         private string battlebit_temp_dir;
 
-        private string apiEndpoint;
-        private string apiToken;
         private string steamUsername;
-        private string serverPassword;
 
 
         public Service()
@@ -84,7 +81,6 @@ namespace GSService
         {
             bool MarkForReinstall = false;
 
-            installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
 
             if (GameServerRunning())
                 KillGameServer();
