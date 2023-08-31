@@ -1,5 +1,5 @@
-# Battlebit-Server-Service
-Battlebit GameServer Service
+# BattleBit-GSS
+BattleBit Game Server Service
 
 Handles starting the server and auto updating.
 
