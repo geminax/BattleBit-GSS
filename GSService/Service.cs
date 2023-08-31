@@ -111,6 +111,7 @@ namespace GSService
                     } 
                     else
                     {
+                        installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
                         SendMessage("Game Server updated", "Info");
                     }
                 }
@@ -316,7 +317,6 @@ namespace GSService
                 SendMessage($"An error occurred: {ex.Message}", "Error");
                 return false;
             }
-            installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
             return true;
 
         }
@@ -327,15 +327,14 @@ namespace GSService
             if (GameServerRunning())
                 KillGameServer();
 
-            string bbDirStr = battlebit_dir;
             try
             {
-                if (Directory.Exists(bbDirStr))
+                if (Directory.Exists(battlebit_dir))
                 {
-                    Directory.Delete(bbDirStr, true);
+                    Directory.Delete(battlebit_dir, true);
                 }
 
-                Directory.CreateDirectory(bbDirStr);
+                Directory.CreateDirectory(battlebit_dir);
 
             }
             catch (Exception ex)
@@ -344,7 +343,7 @@ namespace GSService
                 return false;
             }
 
-            return UpdateGameServer(bbDirStr, true);
+            return UpdateGameServer(battlebit_dir, true);
         }
 
         private void StartFromScratch()
