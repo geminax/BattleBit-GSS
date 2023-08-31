@@ -81,6 +81,10 @@ namespace GSService
         {
             bool MarkForReinstall = false;
 
+            if (Directory.Exists(battlebit_dir))
+            {
+                installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
+            }
 
             if (GameServerRunning())
                 KillGameServer();
