@@ -49,20 +49,8 @@ namespace GSService
         {
             SendMessage("-------- Starting GSS --------", "Info");
 
-            RetrieveEnvVar("gss_api_endpoint", out apiEndpoint, true);
-            if (apiEndpoint == null)
-                return;
-
-            RetrieveEnvVar("gss_api_token", out apiToken, true);
-            if (apiToken == null)
-                return;
-
             RetrieveEnvVar("steam_username", out steamUsername, true);
             if (steamUsername == null)
-                return;
-
-            RetrieveEnvVar("gss_server_password", out serverPassword, true);
-            if (serverPassword == null)
                 return;
 
             Task.Run(() => Start());
@@ -96,16 +84,8 @@ namespace GSService
         {
             bool MarkForReinstall = false;
 
-            if (!UpdateGameServer(battlebit_dir, true))
-            {
-                SendMessage("Failed to update Game Server", "Fatal");
-                Stop();
-            }
-
             installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
-            SendMessage($"Installed Hash: {installedHash}", "Debug");
 
-            // kill server if running
             if (GameServerRunning())
                 KillGameServer();
 
@@ -115,9 +95,6 @@ namespace GSService
             {
                 "-batchmode",
                 "-nographics",
-                //$"-Password={serverPassword}",
-                $"-apiEndpoint={apiEndpoint}",
-                $"-apiToken={apiToken}"
             });
 
             while (true)
