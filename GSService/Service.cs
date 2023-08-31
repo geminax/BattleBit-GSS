@@ -290,9 +290,6 @@ namespace GSService
                 $"+app_update {ConfigurationManager.AppSettings["battlebit_app_id"]}",
             };
 
-            // Remove when moved to production
-            steamcmd_args.Add($"-beta community-testing");
-
             steamcmd_args.Add("+exit");
 
             ProcessStartInfo startInfo = new ProcessStartInfo
