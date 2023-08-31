@@ -42,7 +42,7 @@ For example:
   "LocalIp": "0.0.0.0",
   "Port": 29595,
   "Hz": 60
-  "ApiEndpoint": "127.0.0.1"
+  "ApiEndpoint": "127.0.0.1:29294"
   "ApiToken": "1234"
   "Password": "password"
 }
