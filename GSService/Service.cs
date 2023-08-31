@@ -349,7 +349,7 @@ namespace GSService
                 SendMessage($"An error occurred: {ex.Message}", "Error");
                 return false;
             }
-
+            installedHash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_dir"], new SHA256Managed());
             return true;
 
         }
