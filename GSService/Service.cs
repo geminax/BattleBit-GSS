@@ -17,7 +17,7 @@ namespace GSService
     public partial class Service : ServiceBase
     {
         private EventLog eventLog;
-        private int gsInterval;
+        private int gss_interval;
         private string installedHash;
         private string battlebit_dir;
         private string battlebit_temp_dir;
@@ -25,7 +25,6 @@ namespace GSService
         private string apiEndpoint;
         private string apiToken;
         private string steamUsername;
-        private string serverName;
         private string serverPassword;
 
 
@@ -41,7 +40,7 @@ namespace GSService
             eventLog.Source = "GSS";
             eventLog.Log = "GSSLog";
 
-            gsInterval = int.Parse(ConfigurationManager.AppSettings["gss_interval"]);
+            gss_interval = int.Parse(ConfigurationManager.AppSettings["gss_interval"]);
             battlebit_dir = ConfigurationManager.AppSettings["battlebit_dir"];
             battlebit_temp_dir = ConfigurationManager.AppSettings["battlebit_temp_dir"];
         }
@@ -60,10 +59,6 @@ namespace GSService
 
             RetrieveEnvVar("steam_username", out steamUsername, true);
             if (steamUsername == null)
-                return;
-
-            RetrieveEnvVar("gss_server_name", out serverName, true);
-            if (serverName == null)
                 return;
 
             RetrieveEnvVar("gss_server_password", out serverPassword, true);
@@ -101,13 +96,13 @@ namespace GSService
         {
             bool MarkForReinstall = false;
 
-            if (!UpdateGameServer(ConfigurationManager.AppSettings["battlebit_dir"], true))
+            if (!UpdateGameServer(battlebit_dir, true))
             {
                 SendMessage("Failed to update Game Server", "Fatal");
                 Stop();
             }
 
-            installedHash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_dir"], new SHA256Managed());
+            installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
             SendMessage($"Installed Hash: {installedHash}", "Debug");
 
             // kill server if running
@@ -120,7 +115,6 @@ namespace GSService
             {
                 "-batchmode",
                 "-nographics",
-                $"-Name={serverName}",
                 //$"-Password={serverPassword}",
                 $"-apiEndpoint={apiEndpoint}",
                 $"-apiToken={apiToken}"
@@ -137,7 +131,7 @@ namespace GSService
                 if (UpdateAvailable())
                 {
                     SendMessage("Update Available", "Debug");
-                    if (!UpdateGameServer(ConfigurationManager.AppSettings["battlebit_dir"], true))
+                    if (!UpdateGameServer(battlebit_dir, true))
                     {
                         SendMessage("Failed to update Game Server", "Fatal");
                         Stop();
@@ -165,7 +159,7 @@ namespace GSService
                 if (MarkForReinstall)
                     Thread.Sleep(20000);
                 else
-                    Thread.Sleep(gsInterval);
+                    Thread.Sleep(gss_interval);
             }
         }
 
@@ -272,12 +266,12 @@ namespace GSService
         {
             try
             {
-                if (Directory.Exists(ConfigurationManager.AppSettings["battlebit_temp_dir"]))
+                if (Directory.Exists(battlebit_temp_dir))
                 {
-                    Directory.Delete(ConfigurationManager.AppSettings["battlebit_temp_dir"], true);
+                    Directory.Delete(battlebit_temp_dir, true);
                 }
 
-                Directory.CreateDirectory(ConfigurationManager.AppSettings["battlebit_temp_dir"]);
+                Directory.CreateDirectory(battlebit_temp_dir);
 
             }
             catch (Exception ex)
@@ -286,10 +280,10 @@ namespace GSService
                 return false;
             }
 
-            if (!UpdateGameServer(ConfigurationManager.AppSettings["battlebit_temp_dir"], false))
+            if (!UpdateGameServer(battlebit_temp_dir, false))
                 return false;
 
-            var hash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_temp_dir"], new SHA256Managed());
+            var hash = CalculateBinaryFilesHash(battlebit_temp_dir, new SHA256Managed());
 
             if (installedHash != hash)
             {
@@ -349,7 +343,7 @@ namespace GSService
                 SendMessage($"An error occurred: {ex.Message}", "Error");
                 return false;
             }
-            installedHash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_dir"], new SHA256Managed());
+            installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
             return true;
 
         }
@@ -360,7 +354,7 @@ namespace GSService
             if (GameServerRunning())
                 KillGameServer();
 
-            string bbDirStr = ConfigurationManager.AppSettings["battlebit_dir"];
+            string bbDirStr = battlebit_dir;
             try
             {
                 if (Directory.Exists(bbDirStr))
@@ -388,7 +382,7 @@ namespace GSService
                 SendMessage("Failed to re/install game server", "Fatal");
                 Stop();
             }
-            installedHash = CalculateBinaryFilesHash(ConfigurationManager.AppSettings["battlebit_dir"], new SHA256Managed());
+            installedHash = CalculateBinaryFilesHash(battlebit_dir, new SHA256Managed());
             SendMessage($"Installed Hash: {installedHash}", "Debug");
         }
 

@@ -1,8 +1,0 @@
-{
-  "AntiCheat": "eac",
-  "LocalIp": "0.0.0.0",
-  "Port": 29595,
-  "Hz": 144,
-  "FixedSize": "ultra",
-  "VoxelMode": "true"
-}
